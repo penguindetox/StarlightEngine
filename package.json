@@ -1,0 +1,25 @@
+{
+  "name": "starlight",
+  "version": "0.0.1",
+  "description": "A distributed, key value pair or json document, realtime database engine with a lightning fast pub/sub mechanism with a socketIO or http interface",
+  "main": "./build/main.js",
+  "scripts": {
+    "test": "tsc && node ./build/main.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/penguindetox/StarlightEngine.git"
+  },
+  "keywords": [
+    "database"
+  ],
+  "author": "penguindetox",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/penguindetox/StarlightEngine/issues"
+  },
+  "homepage": "https://github.com/penguindetox/StarlightEngine#readme",
+  "dependencies": {
+    "socket.io": "^4.5.1"
+  }
+}
