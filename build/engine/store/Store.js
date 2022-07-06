@@ -93,7 +93,12 @@ class StarlightStore {
     getByIdFromMemory(id) {
         return __awaiter(this, void 0, void 0, function* () {
             if (this.engine.settings.document) {
-                return JSON.parse(this.documents[id]);
+                try {
+                    return { id, data: JSON.parse(this.documents[id]) };
+                }
+                catch (_a) {
+                    return false;
+                }
             }
             else {
                 return this.keypair[id];

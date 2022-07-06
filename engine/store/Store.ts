@@ -81,7 +81,12 @@ export class StarlightStore{
 
     private async getByIdFromMemory(id:string){
         if(this.engine.settings.document){
-            return JSON.parse(this.documents[id]);
+            try{
+                return {id,data:JSON.parse(this.documents[id])};
+            }catch{ 
+                return false;
+            }
+            
         }else{
             return this.keypair[id];
         }
