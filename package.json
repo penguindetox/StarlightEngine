@@ -4,7 +4,8 @@
   "description": "A distributed, key value pair or json document, realtime database engine with a lightning fast pub/sub mechanism with a socketIO or http interface",
   "main": "./build/main.js",
   "scripts": {
-    "start": "tsc && node ./build/main.js --max-old-space-size=512"
+    "start": "node ./build/main.js --max-old-space-size=512",
+    "dev": "tsc && node ./build/main.js --max-old-space-size=512"
   },
   "repository": {
     "type": "git",
