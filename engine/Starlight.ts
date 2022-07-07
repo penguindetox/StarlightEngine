@@ -4,6 +4,7 @@ import http from 'http';
 import socketio from 'socket.io';
 import { StarlightStore } from "./store/Store";
 import { memoryUsage } from "process";
+import { StarlightCollection } from "./store/models/Collection";
 
 export class StarlightEngine{
     private app: express.Application = express();
@@ -52,7 +53,10 @@ export class StarlightEngine{
 
         this.app.post('/save',async function(req,res,next){
             if(req.body.id && req.body.data){
-               const save = await origin.store.save(req.body.id,req.body.data);
+                if(!req.body.collection){
+                    req.body.collection = "default";
+                }
+               const save = await origin.store.save(req.body.id,req.body.data,req.body.collections);
 
                origin.io.emit('dataChange',save);
                res.json({'status':'success',save});
@@ -62,8 +66,21 @@ export class StarlightEngine{
             
         });
 
-        this.app.get('/save/:id',async function(req,res,next){
-            const save = await origin.store.getById(req.params.id);
+        this.app.post('/collections/create',async function(req,res,next){
+            StarlightCollection.createCollection(req.body.name);
+
+            res.json({'status':'success','collection':req.body.name});
+        });
+
+        this.app.get('/collections',async function(req,res,next){
+
+        });
+
+        this.app.get('/data/:id',async function(req,res,next){
+            if(!req.query.collection){
+                req.query.collection = "default"
+            }
+            const save = await origin.store.getById(req.params.id,req.query.collection as string);
 
             res.json({'status':'success',save});
         });

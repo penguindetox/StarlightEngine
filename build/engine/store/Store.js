@@ -14,7 +14,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.StarlightStore = void 0;
 const promises_1 = __importDefault(require("fs/promises"));
-const Query_1 = require("./Query");
+const Query_1 = require("./models/Query");
 const object_sizeof_1 = __importDefault(require("object-sizeof"));
 class StarlightStore {
     constructor(engine) {
@@ -24,32 +24,32 @@ class StarlightStore {
         this.engine = engine;
         this.query = new Query_1.StarlightQuery(this);
     }
-    save(id, data) {
+    save(id, data, collection = "default") {
         return __awaiter(this, void 0, void 0, function* () {
             if (this.engine.settings.inMemory) {
-                return yield this.saveInMemory(id, data);
+                return yield this.saveInMemory(id, data, collection);
             }
             else {
-                return yield this.saveInFile(id, data);
+                return yield this.saveInFile(id, data, collection);
             }
         });
     }
-    saveInFile(id, data) {
+    saveInFile(id, data, collection) {
         return __awaiter(this, void 0, void 0, function* () {
             if (!this.dirExists) {
-                var dir = yield promises_1.default.readdir('./store').catch(e => { console.log(`An error had occured: ${e}`); return false; });
+                var dir = yield promises_1.default.readdir(`./store/${collection}`).catch(e => { console.log(`An error had occured: ${e}`); return false; });
                 if (dir) {
                     this.dirExists = true;
                 }
                 else {
-                    yield promises_1.default.mkdir('./store');
+                    yield promises_1.default.mkdir('./store/collection');
                     this.dirExists = true;
                 }
             }
             if (this.engine.settings.document && this.dirExists) {
                 try {
                     const fileData = JSON.stringify(data);
-                    const file = yield promises_1.default.writeFile("./store/" + id + ".stf", fileData).then(val => true).catch(e => { console.log(`An error had occured: ${e}`); return false; });
+                    const file = yield promises_1.default.writeFile(`./store/${collection}/` + id + ".stf", fileData).then(val => true).catch(e => { console.log(`An error had occured: ${e}`); return false; });
                     return { 'saved': file, size: (0, object_sizeof_1.default)(data), data, id, 'type': "doc" };
                 }
                 catch (e) {
@@ -57,16 +57,19 @@ class StarlightStore {
                 }
             }
             else if (!this.engine.settings.document && this.dirExists) {
-                const file = yield promises_1.default.writeFile("./store/" + id + ".stk", String(data)).then(val => true).catch(e => { console.log(`An error had occured: ${e}`); return false; });
+                const file = yield promises_1.default.writeFile(`./store/${collection}/` + id + ".stk", String(data)).then(val => true).catch(e => { console.log(`An error had occured: ${e}`); return false; });
                 return { 'saved': file, size: (0, object_sizeof_1.default)(data), data, id, 'type': "keypair" };
             }
         });
     }
-    saveInMemory(id, data) {
+    saveInMemory(id, data, collection) {
         return __awaiter(this, void 0, void 0, function* () {
             if (this.engine.settings.document) {
                 try {
-                    this.documents[id] = JSON.stringify(data);
+                    if (!this.documents[collection]) {
+                        this.documents[collection] = {};
+                    }
+                    this.documents[collection][id] = JSON.stringify(data);
                     return { saved: true, size: (0, object_sizeof_1.default)(data), data, id, 'type': "document" };
                 }
                 catch (e) {
@@ -75,40 +78,43 @@ class StarlightStore {
                 }
             }
             else {
-                this.keypair[id] = data;
+                if (!this.keypair[collection]) {
+                    this.keypair[collection] = {};
+                }
+                this.keypair[collection][id] = data;
                 return { saved: true, size: (0, object_sizeof_1.default)(data), data, id, 'type': "keypair" };
             }
         });
     }
-    getById(id) {
+    getById(id, collection = "default") {
         return __awaiter(this, void 0, void 0, function* () {
             if (this.engine.settings.inMemory) {
-                return this.getByIdFromMemory(id);
+                return this.getByIdFromMemory(id, collection);
             }
             else {
-                return this.getByIdFromFile(id);
+                return this.getByIdFromFile(id, collection);
             }
         });
     }
-    getByIdFromMemory(id) {
+    getByIdFromMemory(id, collection) {
         return __awaiter(this, void 0, void 0, function* () {
             if (this.engine.settings.document) {
                 try {
-                    return { id, data: JSON.parse(this.documents[id]) };
+                    return { id, data: JSON.parse(this.documents[collection][id]) };
                 }
                 catch (_a) {
                     return false;
                 }
             }
             else {
-                return this.keypair[id];
+                return this.keypair[collection][id];
             }
         });
     }
-    getByIdFromFile(id) {
+    getByIdFromFile(id, collection) {
         return __awaiter(this, void 0, void 0, function* () {
             if (this.engine.settings.document) {
-                var file = yield promises_1.default.readFile(`./store/${id}.stf`).catch(e => { console.log(`An error had occured: ${e}`); return false; });
+                var file = yield promises_1.default.readFile(`./store/${collection}/${id}.stf`).catch(e => { console.log(`An error had occured: ${e}`); return false; });
                 if (file && file != true) {
                     return { id, data: JSON.parse(file.toString()), 'type': 'document' };
                 }
@@ -117,7 +123,7 @@ class StarlightStore {
                 }
             }
             else {
-                var file = yield promises_1.default.readFile(`./store/${id}.stk`).catch(e => { console.log(`An error had occured: ${e}`); return false; });
+                var file = yield promises_1.default.readFile(`./store/${collection}/${id}.stk`).catch(e => { console.log(`An error had occured: ${e}`); return false; });
                 if (file && file != true) {
                     return { id, data: file.toString(), 'type': 'keypair' };
                 }

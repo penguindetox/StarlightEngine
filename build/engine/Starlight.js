@@ -18,6 +18,7 @@ const http_1 = __importDefault(require("http"));
 const socket_io_1 = __importDefault(require("socket.io"));
 const Store_1 = require("./store/Store");
 const process_1 = require("process");
+const Collection_1 = require("./store/models/Collection");
 class StarlightEngine {
     constructor(settings) {
         this.app = (0, express_1.default)();
@@ -68,7 +69,10 @@ class StarlightEngine {
             this.app.post('/save', function (req, res, next) {
                 return __awaiter(this, void 0, void 0, function* () {
                     if (req.body.id && req.body.data) {
-                        const save = yield origin.store.save(req.body.id, req.body.data);
+                        if (!req.body.collection) {
+                            req.body.collection = "default";
+                        }
+                        const save = yield origin.store.save(req.body.id, req.body.data, req.body.collections);
                         origin.io.emit('dataChange', save);
                         res.json({ 'status': 'success', save });
                     }
@@ -77,9 +81,22 @@ class StarlightEngine {
                     }
                 });
             });
-            this.app.get('/save/:id', function (req, res, next) {
+            this.app.post('/collections/create', function (req, res, next) {
                 return __awaiter(this, void 0, void 0, function* () {
-                    const save = yield origin.store.getById(req.params.id);
+                    Collection_1.StarlightCollection.createCollection(req.body.name);
+                    res.json({ 'status': 'success', 'collection': req.body.name });
+                });
+            });
+            this.app.get('/collections', function (req, res, next) {
+                return __awaiter(this, void 0, void 0, function* () {
+                });
+            });
+            this.app.get('/data/:id', function (req, res, next) {
+                return __awaiter(this, void 0, void 0, function* () {
+                    if (!req.query.collection) {
+                        req.query.collection = "default";
+                    }
+                    const save = yield origin.store.getById(req.params.id, req.query.collection);
                     res.json({ 'status': 'success', save });
                 });
             });
